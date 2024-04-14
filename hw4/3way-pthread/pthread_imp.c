@@ -70,6 +70,7 @@ main(int argc, char **argv)
 {
     pthread_t threads[NUM_THREADS];
     pthread_attr_t attr;
+    void *status;
 
     /* Initialize and set thread detached attribute */
 	pthread_attr_init(&attr);
@@ -96,7 +97,7 @@ main(int argc, char **argv)
     // TODO: print results 0:99, 1:101, ...
 
     
-    pthread_mutex_destroy(mutex);
+    pthread_mutex_destroy(&mutex);
 	printf("Main: program completed. Exiting.\n");
 	pthread_exit(NULL);
 }
