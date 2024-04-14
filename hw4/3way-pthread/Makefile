@@ -1,6 +1,7 @@
 
 PROGRAM = hw4
 CC = gcc
+CFLAGS=-mcmodel=medium
 EXE = hw4
 CODE = pthread_imp.c
 
@@ -11,6 +12,6 @@ default: all
 all: $(PROGRAM) 
 
 $(PROGRAM): $(OBJECTS)
-	$(CC) $(OBJECTS) -o $(EXE)
+	$(CC) $(CFLAGS) $(OBJECTS) -o $(EXE)
 clean: 
 	rm -f *.o *.exe *.out  *stackdump $(PROGRAM)
