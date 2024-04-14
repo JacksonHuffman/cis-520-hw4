@@ -11,9 +11,11 @@ pthread_mutex_t mutex;          // mutex for line_max_ascii
 int line_max_ascii[LINE_COUNT];
 const int line_count_per_thread = (int)(LINE_COUNT / NUM_THREADS);
 
+FILE *stream;
+
 void init_array()
 {
-    for (i = 0; i < LINE_COUNT; i++) {
+    for (int i = 0; i < LINE_COUNT; i++) {
         line_max_ascii[i] = 0;
     }
 }
@@ -44,7 +46,7 @@ void *process_line(void *myID)
 
     printf("myID = %d startPos = %d endPos = %d \n", (int) myID, startPos, endPos);
 
-    // init local line max ascii
+    // init local array
     for (int i = 0; i < line_count_per_thread; i++) {
         local_line_max_ascii[i] = 0;
     }
@@ -58,7 +60,6 @@ void *process_line(void *myID)
     // Put the values in the global array
     pthread_mutex_lock (&mutex);
     for (int i = startPos; i < endPos; i++) {
-        // get the line i
         line_max_ascii[i] = local_line_max_ascii[i - startPos];
     }
     pthread_mutex_unlock (&mutex);
@@ -68,6 +69,20 @@ void *process_line(void *myID)
 
 main(int argc, char **argv) 
 {
+    if (argc < 1) {
+        printf("%s <text file>\n", argv[0]);
+        exit(-1);
+    }
+
+    const char* text_file_name = argv[1];
+
+    FILE *stream;
+    stream = fopen(text_file_name, "r");
+    if (stream == NULL) {
+        printf("ERROR; Unable to open %s\n", text_file_name);
+        exit(-1);
+    }
+
     pthread_t threads[NUM_THREADS];
     pthread_attr_t attr;
     void *status;
@@ -76,8 +91,10 @@ main(int argc, char **argv)
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
-    for (i = 0; i < NUM_THREADS; i++ ) {
-        rc = pthread_create(&threads[i], &attr, process_line, (void *)i);
+    init_array();
+
+    for (int i = 0; i < NUM_THREADS; i++ ) {
+        int rc = pthread_create(&threads[i], &attr, process_line, (void *)i);
         if (rc) {
             printf("ERROR; return code from pthread_create() is %d\n", rc);
             exit(-1);
@@ -86,8 +103,8 @@ main(int argc, char **argv)
 
     /* Free attribute and wait for the other threads */
 	pthread_attr_destroy(&attr);
-	for(i=0; i<NUM_THREADS; i++) {
-	    rc = pthread_join(threads[i], &status);
+	for(int i=0; i<NUM_THREADS; i++) {
+	    int rc = pthread_join(threads[i], &status);
 	    if (rc) {
             printf("ERROR; return code from pthread_join() is %d\n", rc);
             exit(-1);
@@ -100,4 +117,5 @@ main(int argc, char **argv)
     pthread_mutex_destroy(&mutex);
 	printf("Main: program completed. Exiting.\n");
 	pthread_exit(NULL);
+    fclose(stream);
 }
