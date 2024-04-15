@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define NUM_THREADS 4
 
@@ -11,6 +12,9 @@
 pthread_mutex_t mutex;          // mutex for line_max_ascii
 char data[NUM_LINES][LINE_LENGTH];
 int line_max_ascii[NUM_LINES];
+
+double thread_time[NUM_THREADS];
+double total_time;
 
 int line_count = 0;
 int line_count_per_thread = 0;
@@ -67,6 +71,7 @@ int get_max_ascii_val(char* line)
 
 void *process_line(void *myID)
 {
+    clock_t time = clock();
     int local_line_max_ascii[line_count_per_thread];
 
     int startPos = ((int) myID) * line_count_per_thread;
@@ -88,12 +93,17 @@ void *process_line(void *myID)
         local_line_max_ascii[i - startPos] = get_max_ascii_val(data[i]);
     }
 
+
     // Put the values in the global array
     pthread_mutex_lock (&mutex);
     for (int i = startPos; i < endPos; i++) {
         line_max_ascii[i] = local_line_max_ascii[i - startPos];
     }
     pthread_mutex_unlock (&mutex);
+
+    time = clock() - time;
+
+    thread_time[(int)myID] = ((double)time)/CLOCKS_PER_SEC; // in seconds 
 
     pthread_exit(NULL);
 }
@@ -104,14 +114,25 @@ void print_results() {
     }
 }
 
+/*
+INPUT SIZE/FILE SIZE/LINECOUT: ....
+TOTAL RUN TIME: ... 
+RUN TIME FOR THREAD 1: 
+RUN TIME FOR THREAD 2:
+...
+*/
+
+
 main(int argc, char **argv) 
 {
-    if (argc < 2) {
-        printf("%s <text file>\n", argv[0]);
+    
+    if (argc < 3) {
+        printf("%s <text file> <num of cores>\n", argv[0]);
         exit(-1);
     }
 
     const char* text_file_name = argv[1];
+    const char* num_of_cores = argv[2];
 
     init_array();
     if (read_file(text_file_name) == -1) {
@@ -123,11 +144,14 @@ main(int argc, char **argv)
     pthread_t threads[NUM_THREADS];
     pthread_attr_t attr;
     void *status;
+    clock_t time;
 
     /* Initialize and set thread detached attribute */
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
+    // START TIME
+    time = clock();
     for (int i = 0; i < NUM_THREADS; i++ ) {
         int rc = pthread_create(&threads[i], &attr, process_line, (void *)i);
         if (rc) {
@@ -135,6 +159,7 @@ main(int argc, char **argv)
             exit(-1);
         }
 	}
+    
 
     /* Free attribute and wait for the other threads */
 	pthread_attr_destroy(&attr);
@@ -145,9 +170,19 @@ main(int argc, char **argv)
             exit(-1);
 	    }
 	}
+    time = clock() - time; 
 
-    print_results();
+    total_time = ((double)time)/CLOCKS_PER_SEC; // in seconds 
 
+    //print_results();
+
+    printf("CORES: %s\n", num_of_cores);
+    printf("TOTAL TIME: %f seconds\n", total_time);
+    for(int i = 0; i < NUM_THREADS; i++)
+    {
+        printf("RUN TIME FOR THREAD %i: %f\n", i, thread_time[i]);
+    }
+    
     pthread_mutex_destroy(&mutex);
 	printf("Main: program completed. Exiting.\n");
 	pthread_exit(NULL);
