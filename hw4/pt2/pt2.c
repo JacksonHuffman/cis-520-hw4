@@ -128,7 +128,7 @@ main(int argc, char* argv[])
 	fflush(stdout);
 
 	if ( rank == 0 ) {
-		init_array();
+		init_arrays();
         if (read_file(text_file_name) == -1) {
             exit(-1);
         }
