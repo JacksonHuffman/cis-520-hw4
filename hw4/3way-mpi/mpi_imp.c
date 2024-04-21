@@ -4,14 +4,14 @@
 #include <string.h>
 #include <time.h>
 
-#define NUM_THREADS = 4
+int NUM_THREADS = 4
 
 #define NUM_LINES 1000000
 #define LINE_LENGTH 2500
 
 char data[NUM_LINES][LINE_LENGTH];
 int line_max_ascii[NUM_LINES];
-int local_line_max_ascii[NUM_LINES]
+int local_line_max_ascii[NUM_LINES];
 
 double total_time;
 
@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
 	fflush(stdout);
 
 	if ( rank == 0 ) {
-		init_arrays();
+		init_array();
 	}
 	MPI_Bcast(process_lines, NUM_LINES * LINE_LENGTH, MPI_CHAR, 0, MPI_COMM_WORLD);
 		
