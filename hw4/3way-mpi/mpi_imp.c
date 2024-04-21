@@ -16,12 +16,13 @@ int local_line_max_ascii[NUM_LINES];
 double total_time;
 
 int line_count = 0;
-int line_count_per_thread = 0;
+//int line_count_per_thread = 0;
 int line_left_over = 0;
 
 void init_array() {
     for (int i = 0; i < NUM_LINES; i++) {
         line_max_ascii[i] = 0;
+        local_line_max_ascii[i] = 0;
     }
 }
 
@@ -61,24 +62,17 @@ int get_max_ascii_val(char *line) {
 }
 
 void process_lines(void *rank) {
-    int local_line_max_ascii[line_count_per_thread];
 
     int myID =  *((int*) rank);
-
     int startPos = ((long) myID) * (NUM_LINES / NUM_THREADS);
     int endPos = startPos + (NUM_LINES / NUM_THREADS);
 
     printf("myID = %d startPos = %d endPos = %d \n", (int) myID, startPos, endPos);
 
-    // init local array
-    for (int i = 0; i < line_count_per_thread; i++) {
-        local_line_max_ascii[i] = 0;
-    }
-
     // Get the max ascii value for each line
     for (int i = startPos; i < endPos; i++) {
         // get the line i
-        local_line_max_ascii[i - startPos] = get_max_ascii_val(data[i]);
+        local_line_max_ascii[i] = get_max_ascii_val(data[i]);
     }
 }
 
