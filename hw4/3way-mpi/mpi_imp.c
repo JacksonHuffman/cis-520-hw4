@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
         }
 	}
 
-    for(int i = 0; i < len(data); i++)
+    for(int i = 0; i < line_count; i++)
     {
         printf("Line %d: %s", i, data[i]);
     }
