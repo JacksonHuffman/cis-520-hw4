@@ -83,6 +83,7 @@ void process_lines(void *rank) {
 }
 
 void print_results() {
+    printf("line_count = %d\n", line_count);
     for (int i = 0; i < line_count; i++) {
         printf("%i: %i\n", i, line_max_ascii[i]);
     }
@@ -120,9 +121,7 @@ int main(int argc, char **argv) {
 
 	MPI_Reduce(local_line_max_ascii, line_max_ascii, (NUM_LINES / NUM_THREADS), MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
-
 	print_results();
-
 
 	MPI_Finalize();
 	return 0;
