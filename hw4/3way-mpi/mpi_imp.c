@@ -4,6 +4,8 @@
 #include <string.h>
 #include <time.h>
 
+int NUM_THREADS = 4;
+
 #define NUM_LINES 1000000
 #define LINE_LENGTH 2500
 
@@ -61,6 +63,12 @@ void process_lines(int start_pos, int end_pos) {
     }
 }
 
+void print_results() {
+    for (int i = 0; i < line_count; i++) {
+        printf("%i: %i\n", i, line_max_ascii[i]);
+    }
+}
+
 int main(int argc, char **argv) {
     int num_procs, my_rank;
 
@@ -97,6 +105,8 @@ int main(int argc, char **argv) {
     total_time = time_end - time_start;
 
     printf("Process %d: Total time = %f seconds\n", my_rank, total_time);
+
+    print_results();
 
     MPI_Finalize();
     return 0;
