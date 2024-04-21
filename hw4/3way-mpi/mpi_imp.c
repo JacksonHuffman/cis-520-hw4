@@ -98,12 +98,12 @@ int main(int argc, char **argv) {
 
 	rc = MPI_Init(&argc,&argv);
 	if (rc != MPI_SUCCESS) {
-	  printf ("Error starting MPI program. Terminating.\n");
-          MPI_Abort(MPI_COMM_WORLD, rc);
-        }
+        printf ("Error starting MPI program. Terminating.\n");
+        MPI_Abort(MPI_COMM_WORLD, rc);
+    }
 
-        MPI_Comm_size(MPI_COMM_WORLD,&numtasks);
-        MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+    MPI_Comm_size(MPI_COMM_WORLD,&numtasks);
+    MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
 	NUM_THREADS = numtasks;
 	printf("size = %d rank = %d\n", numtasks, rank);
@@ -115,11 +115,17 @@ int main(int argc, char **argv) {
             exit(-1);
         }
 	}
+
+    for(int i = 0; i < len(data); i++)
+    {
+        printf("Line %d: %s", i, data[i]);
+    }
+    
 	MPI_Bcast(data, NUM_LINES * LINE_LENGTH, MPI_CHAR, 0, MPI_COMM_WORLD);
 		
 	process_lines(&rank);
 
-	MPI_Reduce(local_line_max_ascii, line_max_ascii, (NUM_LINES / NUM_THREADS), MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce(local_line_max_ascii, line_max_ascii, NUM_LINES, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
     if( rank == 0) {
         print_results();
