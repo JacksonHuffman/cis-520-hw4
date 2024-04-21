@@ -93,6 +93,7 @@ int main(int argc, char **argv) {
 	int numtasks, rank;
 	MPI_Status Status;
 
+    const char* text_file_name = argv[1];
 
 	rc = MPI_Init(&argc,&argv);
 	if (rc != MPI_SUCCESS) {
@@ -109,6 +110,9 @@ int main(int argc, char **argv) {
 
 	if ( rank == 0 ) {
 		init_array();
+        if (read_file(text_file_name) == -1) {
+            exit(-1);
+        }
 	}
 	MPI_Bcast(process_lines, NUM_LINES * LINE_LENGTH, MPI_CHAR, 0, MPI_COMM_WORLD);
 		
