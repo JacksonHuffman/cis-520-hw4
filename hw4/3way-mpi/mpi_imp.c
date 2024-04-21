@@ -4,7 +4,7 @@
 #include <string.h>
 #include <time.h>
 
-int NUM_THREADS = 4
+int NUM_THREADS = 4;
 
 #define NUM_LINES 1000000
 #define LINE_LENGTH 2500
