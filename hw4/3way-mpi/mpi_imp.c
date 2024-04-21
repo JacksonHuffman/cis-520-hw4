@@ -115,14 +115,16 @@ int main(int argc, char **argv) {
             exit(-1);
         }
 	}
-	MPI_Bcast(process_lines, NUM_LINES * LINE_LENGTH, MPI_CHAR, 0, MPI_COMM_WORLD);
+	MPI_Bcast(data, NUM_LINES * LINE_LENGTH, MPI_CHAR, 0, MPI_COMM_WORLD);
 		
 	process_lines(&rank);
 
 	MPI_Reduce(local_line_max_ascii, line_max_ascii, (NUM_LINES / NUM_THREADS), MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
-	print_results();
-
+    if( rank == 0) {
+        print_results();
+    }
+	
 	MPI_Finalize();
 	return 0;
 }
