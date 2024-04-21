@@ -7,7 +7,7 @@
 int NUM_THREADS = 4;
 
 #define NUM_LINES 1000000
-#define LINE_LENGTH 2500
+#define LINE_LENGTH 2100
 
 char data[NUM_LINES][LINE_LENGTH];
 int line_max_ascii[NUM_LINES];
