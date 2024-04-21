@@ -2,7 +2,7 @@ PROGRAM = hw4
 CC = mpicc
 CFLAGS=-mcmodel=medium
 EXE = hw4
-CODE = ot2.c
+CODE = pt2.c
 
 OBJECTS=$(CODE:.c=.o)
 
