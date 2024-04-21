@@ -120,9 +120,9 @@ int main(int argc, char **argv) {
 
 	MPI_Reduce(local_line_max_ascii, line_max_ascii, (NUM_LINES / NUM_THREADS), MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
-	if ( rank == 0 ) {
-		print_results();
-	}
+
+	print_results();
+
 
 	MPI_Finalize();
 	return 0;
