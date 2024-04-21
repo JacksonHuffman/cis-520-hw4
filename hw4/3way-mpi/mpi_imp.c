@@ -4,17 +4,20 @@
 #include <string.h>
 #include <time.h>
 
-int NUM_THREADS = 4;
+#define NUM_THREADS = 4
 
 #define NUM_LINES 1000000
 #define LINE_LENGTH 2500
 
 char data[NUM_LINES][LINE_LENGTH];
 int line_max_ascii[NUM_LINES];
+int local_line_max_ascii[NUM_LINES]
 
 double total_time;
 
 int line_count = 0;
+int line_count_per_thread = 0;
+int line_left_over = 0;
 
 void init_array() {
     for (int i = 0; i < NUM_LINES; i++) {
@@ -57,9 +60,50 @@ int get_max_ascii_val(char *line) {
     return max_val;
 }
 
-void process_lines(int start_pos, int end_pos) {
-    for (int i = start_pos; i < end_pos; i++) {
-        line_max_ascii[i] = get_max_ascii_val(data[i]);
+void process_lines(void *rank) {
+    int i, j, charLoc;
+    int myID =  *((int*) rank);
+
+    int startPos = ((long) myID) * (ARRAY_SIZE / NUM_THREADS);
+    int endPos = startPos + (ARRAY_SIZE / NUM_THREADS);
+
+    printf("myID = %d startPos = %d endPos = %d \n", myID, startPos, endPos); fflush(stdout);
+
+    // init local count array
+    for ( i = 0; i < ALPHABET_SIZE; i++ ) {
+        local_char_count[i] = 0;
+    }
+    // count up our section of the global array
+    for ( i = startPos; i < endPos; i++) {
+        for ( j = 0; j < STRING_SIZE; j++ ) {
+            theChar = char_array[i][j];
+            charLoc = ((int) theChar) - 97;
+            local_char_count[charLoc]++;
+        }
+    }
+
+    int local_line_max_ascii[line_count_per_thread];
+
+    int myID =  *((int*) rank);
+
+    int startPos = ((long) myID) * (NUM_LINES / NUM_THREADS);
+    int endPos = startPos + (NUM_LINES / NUM_THREADS);
+
+    printf("myID = %d startPos = %d endPos = %d \n", (int) myID, startPos, endPos);
+
+    // init local array
+    for (int i = 0; i < line_count_per_thread; i++) {
+        local_line_max_ascii[i] = 0;
+    }
+
+    // Get the max ascii value for each line
+    for (int i = startPos; i < endPos; i++) {
+        // get the line i
+        local_line_max_ascii[i - startPos] = get_max_ascii_val(data[i]);
+    }
+
+    for (int i = startPos; i < endPos; i++) {
+        line_max_ascii[i] = local_line_max_ascii[i - startPos];
     }
 }
 
@@ -70,44 +114,37 @@ void print_results() {
 }
 
 int main(int argc, char **argv) {
-    int num_procs, my_rank;
+    int i, rc;
+	int numtasks, rank;
+	MPI_Status Status;
 
-    MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
-    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
-    if (argc < 2) {
-        printf("Usage: %s <text file>\n", argv[0]);
-        MPI_Finalize();
-        exit(-1);
-    }
+	rc = MPI_Init(&argc,&argv);
+	if (rc != MPI_SUCCESS) {
+	  printf ("Error starting MPI program. Terminating.\n");
+          MPI_Abort(MPI_COMM_WORLD, rc);
+        }
 
-    const char *text_file_name = argv[1];
+        MPI_Comm_size(MPI_COMM_WORLD,&numtasks);
+        MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
-    init_array();
-    if (read_file(text_file_name) == -1) {
-        MPI_Finalize();
-        exit(-1);
-    }
+	NUM_THREADS = numtasks;
+	printf("size = %d rank = %d\n", numtasks, rank);
+	fflush(stdout);
 
-    int lines_per_proc = NUM_LINES / num_procs;
-    int start_pos = my_rank * lines_per_proc;
-    int end_pos = start_pos + lines_per_proc;
+	if ( rank == 0 ) {
+		init_arrays();
+	}
+	MPI_Bcast(process_lines, NUM_LINES * LINE_LENGTH, MPI_CHAR, 0, MPI_COMM_WORLD);
+		
+	process_lines(&rank);
 
-    if (my_rank == num_procs - 1) {
-        end_pos += NUM_LINES % num_procs;
-    }
+	MPI_Reduce(local_line_max_ascii, line_max_ascii, (NUM_LINES / NUM_THREADS), MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
-    double time_start = MPI_Wtime();
-    process_lines(start_pos, end_pos);
-    double time_end = MPI_Wtime();
+	if ( rank == 0 ) {
+		print_results();
+	}
 
-    total_time = time_end - time_start;
-
-    printf("Process %d: Total time = %f seconds\n", my_rank, total_time);
-
-    print_results();
-
-    MPI_Finalize();
-    return 0;
+	MPI_Finalize();
+	return 0;
 }
